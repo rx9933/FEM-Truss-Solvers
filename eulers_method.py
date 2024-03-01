@@ -1,8 +1,5 @@
 # December 17th, 2023
-# minimizes need for small angle approximation (uses multiple steps/iterations to determine solution)
-# uses Euler's method
-# increase number of iterations for more accuracy
-# Solves for displacements, given a force.
+# Euler's Method used to solve Non-Linear Truss problems.
 
 import numpy as np
 
