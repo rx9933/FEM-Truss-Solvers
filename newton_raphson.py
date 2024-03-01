@@ -1,4 +1,4 @@
-# February 14th
+# February 14th 2024
 # Newton Raphson Method used to solve Non-Linear Truss problems
 
 import numpy as np
