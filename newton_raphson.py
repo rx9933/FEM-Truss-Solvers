@@ -9,6 +9,8 @@ from functools import reduce
 # Change dataname to any linear or nonlinear input file!
 dataname = "nonLinear3DCube.txt"
 
+
+### DATA PROCESSING ###
 def split_cols(lines, index):
     data = []
     while index < len(lines):
@@ -56,14 +58,12 @@ for line in lines:
         data = split_cols(lines, index)
         for columns in data:
             element_number = int(columns[0])
-            # for i in range(1,nlnodes+1):
-            #     local_nodes
             local_node1 = int(columns[1])
             local_node2 = int(columns[2])
             youngs_modulus = float(columns[3])
             area = float(columns[4])
             ele_data.append([element_number, local_node1, local_node2, youngs_modulus, area])
-        ele = np.array(ele_data)#, dtype=[('element_number', int), ('local_node1', int), ('local_node2', int), ('youngs_modulus', float), ('area', float)])
+        ele = np.array(ele_data)
         local_nodes_arr = ele[:,1:3].astype(int)-1
         E = ele[:,3]
         a = ele[:,4]
@@ -93,7 +93,7 @@ for line in lines:
         disp_bc=[]
         dbcdof=[]
         disp_val_bc=[]
-        dbc=[] # array of displacment info
+        dbc=[] 
         for columns in data:
             disp_bc.append(int(columns[0]))
             dbcdof.append(int(columns[1]))
@@ -102,25 +102,18 @@ for line in lines:
         dnode = np.array(disp_bc)
         ddof = np.array(dbcdof)
         dval = np.array(disp_val_bc)
-        # disp_bc = np.array((disp_bc, dbcdof))-1
-        # disp_val_bc = np.array(disp_val_bc)
     lineno += 1
-
-
-
 currentNode = np.copy(node[:,1:]) # nodal positions after each iteration
 
+### FUNCTIONS ###
+
 def count2List(lst1, lst2):
-    # return reduce(operator.add, zip(lst1, lst2))
-    # def countList(lst1, lst2):
     return np.array([[i, j] for i, j in zip(lst1, lst2)]).ravel()
 def count3List(lst1, lst2, lst3):
-    # return reduce(operator.add, zip(lst1, lst2,lst3))
     return np.array([[i, j, k] for i, j, k in zip(lst1, lst2, lst3)]).ravel()
 def convert_to_2d_array(lst):
     return np.array(lst).reshape(-1, ndim)
 def calcC():
-
     # connectivity: global nodes to local nodes
     C = np.zeros((neles, nodelm, nodes)) # nodes per element, total nodes, total elements
     ele_index = np.arange(len(local_nodes_arr))[:, np.newaxis].repeat(nodelm, axis = 1)
@@ -130,7 +123,6 @@ def calcC():
 
 def calcB(currentNode):
     # B matrix takes global nodes to elements = Connectivity (C) then Angles (A) matrix
-    # Initialize length for bars, cosine/direction matrix, 
     coord_1 = currentNode[local_nodes_arr[:,0], :]
     coord_2 = currentNode[local_nodes_arr[:,1], :]
     element_dir = coord_2 - coord_1 # n1 to n2 vector
@@ -142,81 +134,52 @@ def calcB(currentNode):
 
     # Basis (B) matrix
     B = np.einsum("med, emn -> edn", A, C) # nodelm(m), elements(e), ndims(d) x elements(e), nodelm (m), nodes (n)
-
     return A, B, L
 
 def calcS():
-    # L=np.ones(neles)
-    # S matrix (shifted cosines)
-    # block = np.array([[1, -1], [-1, 1]]) 
-    # arr = np.kron(np.eye(ndim), block)
-    # S = np.tile(arr, (neles, 1, 1))
-    # arr = np.array([[0.0,1.0,1.0,0.0],[0.0,-1.0,-1.0,0.0],[0.0,-1.0,-1.0,0.0],[0.0,1.0,1.0,0.0]])
     if ndim == 2:
         arr = np.array([[[0,1],[0,-1]], [[1,0],[-1,0]], [[0,-1],[0,1]], [[-1,0],[1,0]]], dtype = float)#: for 2d
     elif ndim == 3:
         arr = np.array([[[0,0,1],[0,0,-1]], [[0,1,0],[0,-1,0]], [[1,0,0],[-1, 0,0]],[[0,0,-1],[0,0,1]], [[0,-1,0],[0,1,0]], [[-1,0,0],[1, 0,0]]], dtype = float)
-
-
-
     S = np.tile(arr, (neles, 1, 1))
-    # print(S)
-    # S *= 1/L[:, np.newaxis, np.newaxis]
     S = S.reshape(neles, nodelm, ndim, nodelm, ndim)
-    # print(S)
     return S
 
+nsteps = 300 # load steps
+maxnewt = 5 # max newton raphson iterations
 
+# define unit steps (based on loading)
+unitdval = dval/nsteps
+unitfval = force_values/nsteps
+
+# force tolerance:
+ftol = 1e-9
+
+# initialize forces, displacements
+F = np.zeros((ndim, nodes))
+bar_forces = np.zeros((nsteps, neles))
+N = np.zeros((neles))
+Ru = np.ones(1)
+node_displacements = np.zeros((nsteps,nodes, ndim))
+
+# fist set of values
 C = calcC()
 L0 = calcB(currentNode)[2]
 S = calcS()
 Ea = E*a
 dNdd = Ea/L0
 
-# arbitarary initialization
-N = np.zeros((neles))
-Ru = np.ones(1)
-
-##############################################
-nsteps = 300 # load steps, not used
-maxnewt = 5 # max newton raphson iterations
-
-
-# not used
-ftol = 1e-9
-utol = 1e-15
-
-# not using load steps, yet
-unitdval = dval/nsteps
-unitfval = force_values/nsteps
-##############################################
-F = np.zeros((ndim, nodes))
-
-bar_forces = np.zeros((nsteps, neles))
-node_displacements = np.zeros((nsteps,nodes, ndim))
-numstepsused = 100
 newtno=0
-
-
-RuData = []
-for load in range(numstepsused): # 300, nsteps
-    # print("LOAD NO: ",load, newtno)
-    
+for load in range(nsteps): # 300, nsteps
     newtno = 0
 
+    # input known forces
     if nfbcs!=0: 
         if newtno == 0:
             F[fdof[:nfbcs]-1, fnode-1] +=unitfval
         
-
-    # while (((max(Ru) >=ftol or abs(min(Ru))>=ftol) or newtno == 0) and not(newtno>=maxnewt)): 
-    for iter in range(maxnewt):
+    while (((max(Ru) >=ftol or abs(min(Ru))>=ftol) or newtno == 0) and not(newtno>=maxnewt)): 
         A, B, L = calcB(currentNode)
-        #print(L)
-        # print("ashape", np.shape(A)) # nodelm (m), neles (n), ndim (d)
-        # print("bshape", np.shape(B)) # neles, ndim, nodes (o)
-        # print("cshape", np.shape(C)) # neles, nodelm, nodes
-        # print("lshape", np.shape(L)) # neles
 
         # -e = local, nodal (Fe is forces at local nodes)
         # global nodal, local nodal, elements:
@@ -224,6 +187,7 @@ for load in range(numstepsused): # 300, nsteps
         # F, Fe, N
         # R, Re, Rb
         # Ktangent, Ktangente
+
         # Connectivity (C) matrix takes from global nodal to local nodal
         # Angles (A) matrix takes from local nodal to elements
         scale = dNdd-N/L # neles
@@ -304,44 +268,6 @@ for load in range(numstepsused): # 300, nsteps
         bar_forces[load, :] = N 
         newtno+=1
 
-
-    RuData.append(expectedForces_flat[5])
-
-
-# print(RuData)
-# term_1 = []
-# term_2 = []
-# term_3 = []
-# term_4 = []
-# for ruterm in range(len(RuData)):
-#     # print(RuData[ruterm][0])
-#     term_1.append(RuData[ruterm][0])
-#     term_2.append(RuData[ruterm][1])
-#     term_3.append(RuData[ruterm][2])
-#     term_4.append(RuData[ruterm][3])
-# print("ru", ruterm)
-# # term_1 = np.array(term_1)
-
-# print(term_1)
-# plt.plot(term_1)
-# plt.plot(term_2)
-# plt.plot(term_3)
-'''
-plt.plot(RuData)
-plt.xlabel("load step")
-plt.ylabel("Ru Value")
-plt.legend(("RuTerm1", "RuTerm2", "RuTerm3", "RuTerm4"))
-
-plt.savefig("Ru Equilateral")
-plt.show()
-
-
-# plt.plot(bar_forces[:,1])
-# # plt.plot(bar_forces[:,2])
-# plt.savefig("bar eq")
-# plt.show()
-
-'''
 print("Internal Bar Forces (N):", N, "\n")
 print("Final Bar Lengths (L):", L, "\n")
 print("Net Nodal Displacements:", net_displacement)
