@@ -4,8 +4,7 @@
 import numpy as np
 
 # Change dataname to any linear or nonlinear input file!
-dataname = "nonLinear3DCube.txt"
-
+dataname = "nonLinear2DEquTriangle.txt"
 
 ### DATA PROCESSING ###
 def split_cols(lines, index):
