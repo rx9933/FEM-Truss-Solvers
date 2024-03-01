@@ -1,0 +1,47 @@
+This is a program to solve for the forces and displacements in trusses in 2D or 3D.
+3d Tetrahedron, fixed base.
+
+Number of spatial dimensions:
+3
+
+Number of joints/nodes:
+4
+
+Node #, x-location, y-location, (z-location if 3D)
+1	0.0	0.0 1.0 
+2	2.0	0.0 0.0
+3	0.0	0.0 0.0
+4	0.0	1.0 0.0 
+
+
+Number of bars/elements:
+6
+
+Element#, Local node1, Local node2, Young's modulus, Area
+1	1	2	1.0	1.0
+2	1	3   1.0	1.0
+3	2	3	1.0	1.0
+4	2	4	1.0	1.0
+5	1	4	1.0	1.0
+6	3	4	1.0	1.0
+
+
+Number of applied forces
+1
+
+Node#, Force direction, Force value
+4	2	-1.0
+
+Number of known/applied displacements
+9
+
+Node#, Displacement direction, Displacement value
+1	1	0.0
+1	2	0.0
+1   3   0.0
+2	1	0.0
+2	2	0.0
+2   3   0.0
+3	1	0.0
+3	2	0.0
+3   3   0.0
