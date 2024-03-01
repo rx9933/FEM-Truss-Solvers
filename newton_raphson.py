@@ -1,10 +1,7 @@
+# February 14th
+# Newton Raphson Method used to solve Non-Linear Truss problems
+
 import numpy as np
-from math import sqrt
-from numpy.linalg import inv
-import itertools
-import matplotlib.pyplot as plt
-import operator
-from functools import reduce
 
 # Change dataname to any linear or nonlinear input file!
 dataname = "nonLinear3DCube.txt"
