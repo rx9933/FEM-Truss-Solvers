@@ -1,6 +1,7 @@
 <h1 align="center">FEM Truss Solver</h1>
 <p align="center">
-  <b> :Linear and Non-linear deformation solver for truss problems (external force or deformation constrains). </b></br>
+  <b> Linear and Non-linear deformation solver for truss problems (external force or deformation constrains). </b></br>
+  
   <sub><sub>
 </p>
 <br />
