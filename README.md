@@ -12,4 +12,5 @@
 
 The .txt files represent the input data files (different truss structures and constraints. For any of the methods/code files, ensure to change the "dataname" variable to the appropriate problem/data file before running the program.
 Use 'Animated_Truss.blend' after running the program to visualize the stress/strain/deformations of the truss structure:
-[![IMAGE ALT TEXT](http://img.youtube.com/vi/3hXeJQ47j-w/0.jpg)](https://youtu.be/3hXeJQ47j-w?si=v_Oy51CwoIDUegq9 "Animated Truss Visualization")
+
+[![Animated Truss Video](http://img.youtube.com/vi/3hXeJQ47j-w/0.jpg)](https://youtu.be/3hXeJQ47j-w?si=v_Oy51CwoIDUegq9 "Animated Truss Visualization")
